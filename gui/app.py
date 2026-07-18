@@ -36,7 +36,7 @@ _REQUIRED_FIELDS = (
 _DEFAULT_PREFILL: Dict[str, str] = {
     "groq_api_url": "https://api.groq.com/openai/v1",
     "groq_model": "groq/compound-mini",
-    "groq_request_delay_seconds": "3",
+    "groq_request_delay_seconds": "5",
     "music_directory": "",
 }
 
@@ -55,7 +55,7 @@ def _prefill_from_env() -> Dict[str, str]:
             "groq_model": config.get("groq_model")
             or _DEFAULT_PREFILL["groq_model"],
             "groq_request_delay_seconds": config.get(
-                "groq_request_delay_seconds", "3"
+                "groq_request_delay_seconds", "5"
             ),
             "music_directory": config.get("music_directory", ""),
         }
@@ -82,7 +82,7 @@ def create_app(job_manager: Optional[JobManager] = None) -> Flask:
         values = {
             key: (data.get(key) or "").strip() for key, _ in _REQUIRED_FIELDS
         }
-        delay_raw = (data.get("groq_request_delay_seconds") or "3").strip()
+        delay_raw = (data.get("groq_request_delay_seconds") or "5").strip()
 
         missing = [
             label

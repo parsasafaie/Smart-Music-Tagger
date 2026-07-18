@@ -1,4 +1,4 @@
-# 🎵 Smart Music Tagger
+# Smart Music Tagger
 
 ### AI-powered music metadata cleaning & file renaming.
 
@@ -6,280 +6,179 @@
 
 ---
 
-Smart Music Tagger analyzes your music filenames with AI, extracts accurate
-metadata, writes clean tags into your files, and renames them to a consistent
-format — automatically, across whole folders at a time.
+Smart Music Tagger analyzes music filenames with AI, extracts accurate metadata,
+writes clean tags into audio files, and renames them to a consistent format.
 
-It ships with **two interchangeable front-ends** that share one core engine:
+It provides two interchangeable front-ends that share the same processing engine:
 
-- 💻 **CLI** — a terminal interface driven by a `.env` file
-- 🌐 **Web GUI** — a Flask app with live progress streaming
+- **CLI**
+- **Web GUI**
 
-Both produce identical results. Use whichever fits the task.
+---
 
+## Features
 
+- AI-powered metadata extraction via the Groq API
+- Removes existing metadata before writing clean tags
+- Renames files to `Artist - Song.ext`
+- Supports MP3, FLAC, WAV, M4A and OGG
+- CLI and Web GUI powered by the same core engine
+- Human-readable log files
+- Modular architecture
 
-## ✨ Features
+<p align="center">
+  <img src="docs/images/cli-interface.png" alt="CLI Interface" width="400" height="700">
+  <img src="docs/images/web-interface.png" alt="Web GUI" width="400" height="700">
+</p>
 
-- **AI metadata extraction** via the Groq API (with web-search verification)
-- **Clean tags** — clears existing junk, writes only verified fields
-- **Auto-renames** files to `Artist - Song.ext`
-- **Two front-ends** — CLI for automation, Web GUI for interactive runs
-- **Live progress** — the GUI streams per-file progress over Server-Sent Events
-- **Detailed logging** — every run writes a human-readable log file
-- **Modular architecture** — core logic is fully decoupled from the UI
-- Supports **MP3, FLAC, WAV, M4A, OGG**
+---
 
-
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 
-- **Python 3.8+**
-- **pip**
-- A **Groq API key** — create one (free) at <https://console.groq.com/keys>
+- Python 3.8+
+- pip
+- A Groq API key
 
-### Steps
+1. Clone the repository
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/parsasafaie/smart-music-tagger.git
-   cd smart-music-tagger
-   ```
+```bash
+git clone https://github.com/parsasafaie/smart-music-tagger.git
+cd smart-music-tagger
+```
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+2. Install dependencies
 
-3. **Create your configuration file**
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-4. **Edit `.env`** with your values (see [Configuration](#-configuration)):
-   ```env
-   GROQ_API_KEY=your_groq_api_key
-   GROQ_API_URL=https://api.groq.com/openai/v1
-   GROQ_MODEL=groq/compound-mini
-   GROQ_REQUEST_DELAY_SECONDS=3
-   MUSIC_DIRECTORY=C:/Users/YourName/Music
-   ```
+3. Create the configuration file
 
-> ⚠️ **Keep `.env` private** — it contains your API key. It is already in `.gitignore`.
+```bash
+cp .env.example .env
+```
 
+4. Edit `.env`
 
-## 🚀 Usage
+```env
+GROQ_API_KEY=your_groq_api_key
+GROQ_API_URL=https://api.groq.com/openai/v1
+GROQ_MODEL=groq/compound-mini
+GROQ_REQUEST_DELAY_SECONDS=5
+MUSIC_DIRECTORY=C:/Users/YourName/Music
+```
 
-Pick a front-end. Both run the same pipeline and produce the same results.
+> Keep your `.env` file private. It contains your API key.
 
-| Mode | Command | Best for |
-|------|---------|----------|
-| 💻 **CLI** | `python cli_main.py` | Automation, scripts, servers, headless machines |
-| 🌐 **Web GUI** | `python gui_main.py` | Interactive runs, visual progress, one-off batches |
+---
 
-### The pipeline (identical in both modes)
+## Configuration
 
-For every audio file in your music directory:
+The CLI reads these values from `.env`. The Web GUI accepts the same settings
+through its graphical form.
 
-1. 🎯 **Analyze** the filename with AI → extract metadata
-2. 🧹 **Clear** all existing tags from the file
-3. ✍️ **Write** clean, verified metadata (title, artist, album, genre, year…)
-4. 📝 **Rename** the file to `Artist - Song.ext`
-5. 📒 **Log** the result
+| Variable | Required | Description |
+|----------|:--------:|-------------|
+| `GROQ_API_KEY` | Yes | Your Groq API key |
+| `GROQ_API_URL` | Yes | Groq API endpoint |
+| `GROQ_MODEL` | Yes | Model name |
+| `GROQ_REQUEST_DELAY_SECONDS` | No | Delay between API requests |
+| `MUSIC_DIRECTORY` | Yes | Path to your music folder |
 
-### 💻 CLI mode
+---
 
-Reads configuration from `.env` and runs the whole pipeline in the terminal:
+## Usage
+
+Both interfaces use the same processing pipeline.
+
+### CLI
+
+Reads configuration from `.env`.
 
 ```bash
 python cli_main.py
 ```
 
-Example output:
+### Web GUI
 
-```
-╔════════════════════════════════════════╗
-║     SMART MUSIC TAGGER                 ║
-║     AI-Powered Metadata Management     ║
-╚════════════════════════════════════════╝
-
-ℹ Info: Scanning directory: C:/Users/You/Music
-  Files to Process: 3
-
-[1/3] Processing:
-  eminem_lose_yourself_320kbps.mp3
-         ↓
-  Eminem - Lose Yourself.mp3
-
-  ✓ Artist: Eminem
-  ✓ Album: 8 Mile
-  ✓ Genre: Hip Hop
-  ✓ Release Year: 2002
-
-Processing Complete:
-  Total Files:    3
-  Successful:     3
-  Failed:         0
-  Success Rate:   100.0%
-```
-
-### 🌐 Web GUI mode (Flask)
-
-A browser interface that takes configuration from a form and shows progress live.
+Starts a local Flask application.
 
 ```bash
 python gui_main.py
 ```
 
-Then open **<http://127.0.0.1:5000>** in your browser, fill in the form, and click **Start Tagging**.
+Open:
 
-**Options:**
+```
+http://127.0.0.1:5000
+```
+
+Fill in the form and click **Start Tagging**.
+
+Available options:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--host` | `127.0.0.1` | Bind address (use `0.0.0.0` only on a trusted LAN) |
+| `--host` | `127.0.0.1` | Bind address |
 | `--port` | `5000` | Bind port |
-| `--debug` | off | Enable Flask debug/reload mode |
+| `--debug` | Off | Enable Flask debug mode |
 
-> 🔒 **Security:** the server binds to `127.0.0.1` (localhost only) by default.
-> Your API key is sent only to start a job and is **never** stored, logged, or
-> echoed back in any response. If a `.env` file exists, its non-secret fields
-> are prefilled in the form as a convenience.
+> By default, the Web GUI is accessible only from `127.0.0.1`. API keys are never stored or returned.
 
 ---
 
-## ⚙️ Configuration
+## Metadata Written
 
-All settings live in a `.env` file (used by the CLI; the GUI takes the same
-values from its form).
+For each file, Smart Music Tagger writes:
 
-| Variable | Required | Default | Description |
-|----------|:--------:|---------|-------------|
-| `GROQ_API_KEY` | ✅ | — | Your Groq API key |
-| `GROQ_API_URL` | ✅ | — | Groq API endpoint (`https://api.groq.com/openai/v1`) |
-| `GROQ_MODEL` | ✅ | — | Model name (`groq/compound-mini`) |
-| `GROQ_REQUEST_DELAY_SECONDS` | ❌ | `3` | Minimum delay between API requests |
-| `MUSIC_DIRECTORY` | ✅ | — | Path to your music folder |
+- Song title
+- Artist(s)
+- Album
+- Genre
+- Release year
+- Album artist
+- Track number (when available)
 
----
-
-## 🎧 Supported Formats
-
-| Format | Extension |
-|--------|-----------|
-| MP3 | `.mp3` |
-| FLAC | `.flac` |
-| WAV | `.wav` |
-| M4A | `.m4a` |
-| OGG | `.ogg` |
-
-## 🏷️ Metadata Written
-
-For each file, the AI extracts and writes:
-
-- **Song name** (title)
-- **Artist(s)** — supports multiple artists
-- **Album**
-- **Genre**
-- **Release year**
-- **Album artist** & **track number** (when available)
-
-The AI cleans filenames by removing bitrate tags (`320kbps`), source/site
-names, and labels like "Official Video" or "Lyrics" — then verifies the
-metadata via web search only when needed, never guessing unknown fields.
+Existing metadata is cleared before writing verified information. Unknown fields
+are never guessed.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
-Smart Music Tagger uses a **modular, layered design**. All business logic
-lives in a single reusable service (`TaggerService`), which both front-ends
-drive — so the CLI and GUI never duplicate logic.
+Smart Music Tagger follows a modular layered architecture. Both the CLI and the
+Web GUI use the same `TaggerService`, keeping the user interfaces independent
+from the core processing logic.
 
-```
+```text
        cli_main.py                gui_main.py
-       (reads .env)               (web form)
             │                         │
             └────────────┬────────────┘
                          ▼
-               TaggerService  ← core/service.py
+                  TaggerService
                          │
          ┌───────────────┼───────────────┐
          ▼               ▼               ▼
     FileScanner     FileProcessor    FileRenamer
                          │
-                GroqClient (AI) + MetadataWriter
+                GroqClient + MetadataWriter
                          │
-                     Logger → log file
+                       Logger
 ```
 
-**Key principle:** the core knows nothing about the CLI or GUI. Adding the
-web GUI required **zero changes** to `cli/` or `core/` — it simply wires form
-input into the same service and streams progress back via a callback.
-
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full module breakdown.
-
-### Project structure
-
-```
-smart-music-tagger/
-├── cli_main.py             # CLI entry point
-├── gui_main.py             # GUI entry point (Flask)
-├── config/
-│   └── config_loader.py    # .env loader (CLI)
-├── core/                   # Shared business logic
-│   ├── service.py          # TaggerService — orchestration
-│   ├── scanner.py          # File scanning
-│   ├── processor.py        # AI analysis + tag writing
-│   └── renamer.py          # File renaming
-├── ai/                     # Groq client + data models
-├── metadata/               # Tag read/write (mutagen)
-├── cli/                    # Rich terminal interface
-├── gui/                    # Flask web app (SSE progress)
-│   ├── app.py              # Flask app factory + routes
-│   ├── runner.py           # Background job runner
-│   ├── progress.py         # Thread-safe SSE event store
-│   ├── templates/
-│   └── static/
-├── logs/                   # Generated log files
-└── requirements.txt
-```
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for more details.
 
 ---
 
-## 📒 Logging
+## License
 
-Every run writes a log file to `logs/music_tagger_YYYYMMDD_HHMMSS.log`,
-recording:
-
-- Original → new filename
-- Extracted metadata
-- Success/failure status
-- Any errors encountered
-- A final processing summary
+Released under the **MIT License**. See [`LICENSE`](LICENSE).
 
 ---
 
-## 🛠️ Troubleshooting
+## Contributing
 
-| Problem | Likely cause & fix |
-|---------|--------------------|
-| **"Configuration file not found"** | Create `.env`: `cp .env.example .env` |
-| **"Missing required configuration"** | Fill in all required keys (see [Configuration](#-configuration)) |
-| **"Music directory does not exist"** | Fix the `MUSIC_DIRECTORY` path |
-| **API error `401 Unauthorized`** | Wrong or invalid `GROQ_API_KEY` |
-| **"No audio files found"** | Directory has no MP3/FLAC/WAV/M4A/OGG files |
-| **Rename fails** | Check write permissions / duplicate filenames |
-| **GUI port already in use** | Run with `--port 5001` |
-
----
-
-## 📄 License
-
-Released under the **MIT License** — see [`LICENSE`](LICENSE).
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow the existing modular architecture:
-keep business logic in `core/`, and UI concerns in `cli/` or `gui/`.
+Contributions are welcome. Please keep business logic inside `core/` and
+UI-related code inside `cli/` or `gui/`.

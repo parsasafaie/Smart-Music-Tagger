@@ -2,263 +2,235 @@
 
 ## Overview
 
-Smart Music Tagger is built with a **modular, layered architecture** designed for:
-- **Maintainability** - Clear separation of concerns
-- **Testability** - Independent module testing
-- **Extensibility** - Easy to add features without core changes
-- **GUI-readiness** - Core logic independent from CLI
-- **Scalability** - Support for batch operations and future APIs
+Smart Music Tagger follows a **modular, layered architecture** designed to keep
+business logic independent from the user interface. Both the CLI and the Web
+GUI use the same processing pipeline, making the application easy to maintain,
+test, and extend.
 
-## Architecture Layers
+## Architecture
 
-```
-┌─────────────────────────────────────┐
-│      User Interface Layer           │
-│      (CLI Interface / Flask GUI)    │
-│      cli/interface.py, gui/         │
-└──────────────┬──────────────────────┘
+```text
+┌──────────────────────────────┐
+│        CLI / Web GUI         │
+└──────────────┬───────────────┘
                │
-┌──────────────┴──────────────────────┐
-│    Application Logic Layer          │
-│    (Orchestration & Control)        │
-│    cli_main.py / gui_main.py        │
-└──────────────┬──────────────────────┘
+     cli_main.py / gui_main.py
                │
-    ┌──────────┼──────────┬────────────┐
-    ↓          ↓          ↓            ↓
-┌──────┐  ┌─────────┐ ┌──────────┐ ┌─────────┐
-│ Core │  │   AI    │ │ Metadata │ │ Config  │
-│ Ops  │  │ Client  │ │  Tools   │ │ Manager │
-└──────┘  └─────────┘ └──────────┘ └─────────┘
-    │          │          │            │
-┌───┴──┐   ┌───┴────┐  ┌─┴────┐   ┌──┴─────┐
-│ core/│   │ ai/    │  │meta/ │   │config/  │
-│      │   │        │  │      │   │         │
-└──────┘   └────────┘  └──────┘   └─────────┘
-    │
-┌───┴──────────────────────────┐
-│  Support Layers              │
-│  utils/ - logging/           │
-│  (Utilities & Logging)       │
-└──────────────────────────────┘
+               ▼
+        TaggerService
+               │
+    ┌──────────┼──────────┐
+    ▼          ▼          ▼
+FileScanner FileProcessor FileRenamer
+               │
+      GroqClient + MetadataWriter
+               │
+             Logger
 ```
 
-## Module Breakdown
+---
 
-### 1. **Entry Points** (`cli_main.py`, `gui_main.py`)
-**Purpose**: Application orchestration / front-end selection
+## Components
 
-**Responsibilities**:
-- Load configuration (`cli_main.py` from `.env`, `gui_main.py` from a web form)
-- Initialize all components
-- Coordinate processing workflow
-- Display user feedback (terminal or browser)
-- Handle errors gracefully
+### Entry Points
 
-Both entry points are thin wrappers over the shared `TaggerService`; neither
-contains business logic.
+**Files**
 
-**Dependencies**: All other modules
+- `cli_main.py`
+- `gui_main.py`
 
-```python
-# Flow:
-config → scanner → processor → renamer → logger → CLI
+The application's entry points. Their responsibilities are limited to:
+
+- Loading configuration
+- Creating the `TaggerService`
+- Starting the processing pipeline
+- Presenting results to the user
+
+Neither entry point contains business logic.
+
+---
+
+### config/
+
+Loads and validates configuration from the `.env` file for the CLI. The Web GUI
+receives the same values from its configuration form.
+
+---
+
+### core/
+
+Contains the application's core business logic.
+
+#### TaggerService
+
+The central orchestration layer shared by every front-end.
+
+Pipeline:
+
+```text
+Scan files
+      │
+      ▼
+Analyze filename
+      │
+      ▼
+Clear metadata
+      │
+      ▼
+Write metadata
+      │
+      ▼
+Rename file
+      │
+      ▼
+Log result
 ```
 
-### 2. **config/** - Configuration Management
-**Location**: `config/config_loader.py`
+#### FileScanner
 
-**Purpose**: Load and validate application settings from `.env` file
+Scans a directory for supported audio files.
 
-**Key Class**:
-```python
-ConfigLoader
-├── __init__(env_file=".env")
-├── validate()  # Check required fields
-├── get(key, default)  # Get config value
-└── get_all()  # Get all config
+Supported formats:
+
+- MP3
+- FLAC
+- WAV
+- M4A
+- OGG
+
+#### FileProcessor
+
+Processes each file by:
+
+1. Sending the filename to the AI.
+2. Clearing existing metadata.
+3. Writing verified metadata.
+
+#### FileRenamer
+
+Renames processed files using the standard format:
+
+```text
+Artist - Song.ext
 ```
 
-### 3. **core/** - Core Processing Logic
+---
 
-#### 3.0 **TaggerService** (`core/service.py`)
-**Purpose**: Reusable orchestration layer — the single entry point shared by both the CLI and any future GUI.
+### ai/
 
-All configuration is passed as constructor parameters (api_key, api_url, model, delay, music_directory), so the service never reads `.env` or any global state. Progress is reported through an optional ``on_progress(index, total, result, new_filename)`` callback.
+Contains the Groq API client and shared metadata models.
 
-```python
-TaggerService (core/service.py)
-├── __init__(api_key, api_url, model, request_delay_seconds, music_directory, logger=None)
-├── scan()                # Returns (file_list, count)
-├── process_all(on_progress=None)  # Runs the full pipeline, returns summary
-└── _log(...)             # Writes to Logger if one is configured
-```
+Responsibilities:
 
-**Pipeline**:
-```
-scan() → for each file: analyze → clear metadata → write metadata → rename → log → on_progress callback
-```
+- AI communication
+- Response validation
+- Metadata extraction
 
-This is the class a future Flask app will instantiate with form-provided config.
+The AI returns structured metadata as JSON and only verifies information through
+web search when necessary.
 
-#### 3.1 **FileScanner** (`core/scanner.py`)
-**Purpose**: Find audio files in directories
+---
 
-**Supports**: MP3, FLAC, WAV, M4A, OGG (non-recursive)
+### metadata/
 
-#### 3.2 **FileProcessor** (`core/processor.py`)
-**Purpose**: Per-file AI analysis, metadata clearing, and metadata writing
+Handles all metadata operations using **Mutagen**.
 
-**Workflow**:
-```
-File → AI Analysis → Clear All Metadata → Write Clean Metadata → Result
-```
+Responsibilities:
 
-**Returns**:
-```python
-{
-    'filepath': str,
-    'filename': str,
-    'success': bool,
-    'metadata': MusicMetadata,
-    'errors': [str]
-}
-```
+- Read existing tags
+- Remove old metadata
+- Write clean metadata
 
-#### 3.3 **FileRenamer** (`core/renamer.py`)
-**Purpose**: Rename files to standard format (`Artist - Song.ext`)
+---
 
-### 4. **ai/** - AI Integration
+### cli/
 
-**Purpose**: Groq API communication
+Terminal interface built with **Rich**.
 
-**Key Classes**:
-```python
-MusicMetadata (ai/models.py)
-├── song_name: str
-├── artists: [str]
-├── album: str
-├── genre: str
-├── release_year: str
-├── album_artist: str (optional)
-├── track_number: str (optional)
-└── additional_metadata: dict
+Responsible only for displaying progress and results.
 
-GroqClient (ai/groq_client.py)
-├── __init__(api_key, api_url, model="groq/compound-mini", request_delay_seconds)
-├── analyze_filename(filename)  # Main method
-├── _call_api(prompt)  # API call
-└── _parse_response(text)  # JSON parsing
-```
+---
 
-**Prompt Design**:
-- System: Clean the filename, verify metadata (web search only when needed), never guess, return JSON only
-- User: The filename only (no schema template; the system prompt names the required fields)
-- Model: `groq/compound-mini` (lightweight, with built-in web search for verification)
+### gui/
 
-### 5. **metadata/** - Metadata Operations
+Flask-based web interface.
 
-#### 5.1 **MetadataReader** (`metadata/reader.py`)
-**Purpose**: Read existing metadata from files
+Responsibilities:
 
-#### 5.2 **MetadataWriter** (`metadata/writer.py`)
-**Purpose**: Write metadata to files (ID3, Vorbis, M4A tags)
+- Collect configuration from the user
+- Start processing jobs
+- Stream progress updates
+- Display results in the browser
 
-### 6. **cli/** - User Interface
-**Location**: `cli/interface.py`
+---
 
-**Purpose**: Beautiful terminal output using Rich library
+### logs/
 
-### 7. **logs/** - Logging System
-**Location**: `logs/logger.py`
+Creates human-readable log files for every execution.
 
-**Purpose**: Human-readable log files in `logs/music_tagger_YYYYMMDD_HHMMSS.log`
-
-### 8. **utils/** - Utility Functions
-**Location**: `utils/helpers.py`
-
-**Purpose**: Filename sanitization, format checking, artist formatting
+---
 
 ## Data Flow
 
-```
-CLI mode:                   GUI mode:
-  python cli_main.py          python gui_main.py
-      ↓                           ↓
-  Load .env (config/)         Form input (api_key, dir, delay)
-      ↓                           ↓
-      └──────────┬────────────────┘
-                 ↓
-         TaggerService (core/service.py)
-         Config passed as constructor params
-                 ↓
-         scan() → process_all(on_progress=...)
-                 ↓
-    ┌────────────┼──────────────────┐
-    ↓            ↓                  ↓
- FileScanner   FileProcessor    FileRenamer
-    ↓            ↓                  ↓
-         GroqClient (ai/)
-         MetadataWriter (metadata/)
-         Logger (logs/)
-                 ↓
-         on_progress callback
-          ├─ CLI: print to terminal
-          └─ GUI: update view / SSE stream
-                 ↓
-         Summary dict returned
+```text
+CLI (.env)            Web GUI (Form)
+      │                     │
+      └──────────┬──────────┘
+                 ▼
+          TaggerService
+                 │
+          FileScanner
+                 │
+          FileProcessor
+                 │
+        GroqClient (AI)
+                 │
+        MetadataWriter
+                 │
+          FileRenamer
+                 │
+             Logger
+                 │
+      CLI Output / Web GUI
 ```
 
-## Dependency Management
+---
 
-### External Dependencies
-```
-requests     → ai/groq_client.py (API requests)
-mutagen      → metadata/reader.py, metadata/writer.py
-python-dotenv → config/config_loader.py
-rich         → cli/interface.py
-```
+## Module Relationships
 
-### Internal Dependencies
-```
-cli_main.py → config/, core/TaggerService, cli/, logs/
-gui_main.py → gui/ → core/TaggerService, logs/ (no config/, no cli/ dependency)
-
-core/service.py → core/scanner, core/processor, core/renamer, ai/, logs/
-  (no CLI, no config dependency — fully GUI-agnostic)
-core/processor.py → ai/, metadata/ (no CLI dependency)
-ai/groq_client.py → standalone (requests only)
-cli/interface.py  → standalone (no core logic dependency)
+```text
+cli_main.py
+gui_main.py
+        │
+        ▼
+ TaggerService
+        │
+ ┌──────┼───────────────┐
+ ▼      ▼               ▼
+core/  ai/         metadata/
+        │
+        ▼
+      logs/
 ```
 
-## Extensibility Points
+---
 
-### Adding New Features
+## Key Design Decisions
 
-#### 1. **New Audio Format**
-Extend `metadata/writer.py` and `utils/helpers.py`
+- A single processing engine shared by both front-ends.
+- Complete separation between UI and business logic.
+- Modular components with clear responsibilities.
+- Easy integration of future interfaces without changing the core.
+- Centralized logging for every processing run.
 
-#### 2. **Alternative AI Provider**
-Add a new client in `ai/` implementing the same `analyze_filename()` interface
+---
 
-#### 3. **GUI Implementation**
-Create `gui/interface.py` using the same core modules
+## Additional Documentation
 
-#### 4. **REST API**
-Create `api/routes.py` using the same core modules
+For implementation details, see the source code inside:
 
-## Design Principles
-
-1. **Separation of Concerns** - Each module has a single responsibility
-2. **Dependency Injection** - Components receive dependencies as parameters
-3. **Fail-Fast Validation** - Check preconditions early
-4. **Graceful Degradation** - Continue processing if individual files fail
-
-## Summary
-
-Smart Music Tagger's architecture provides:
-
-- Clean separation between modules
-- Easy testing and extension
-- GUI-ready core logic
-- Production-quality error handling and logging
+- `core/`
+- `ai/`
+- `metadata/`
+- `cli/`
+- `gui/`

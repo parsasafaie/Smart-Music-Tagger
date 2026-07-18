@@ -1,221 +1,244 @@
-# Smart Music Tagger - Quick Start Guide
+# Smart Music Tagger – Quick Start Guide
 
-## 5-Minute Setup
+Get Smart Music Tagger up and running in just a few minutes.
 
-### 1. Install Dependencies
+---
+
+## Installation
+
+Install the required dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure with .env File
+---
 
-Copy the example configuration:
+## Configuration
+
+> **Note:** Configuration via `.env` is only required for the CLI. The Web GUI lets you enter all required settings directly from the graphical interface.
+
+### Copy the configuration file (CLI only)
+
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your settings:
-```
+Edit the `.env` file:
+
+```env
 GROQ_API_KEY=your_groq_api_key
 GROQ_API_URL=https://api.groq.com/openai/v1
 GROQ_MODEL=groq/compound-mini
-GROQ_REQUEST_DELAY_SECONDS=3
+GROQ_REQUEST_DELAY_SECONDS=5
 MUSIC_DIRECTORY=C:/Users/YourName/Music
 ```
 
-**Important**: Keep `.env` private - it contains your API key!
+### Required Variables
 
-### 3. Run
+| Variable | Description |
+|----------|-------------|
+| `GROQ_API_KEY` | Your Groq API key |
+| `GROQ_API_URL` | Groq API endpoint |
+| `GROQ_MODEL` | AI model used for metadata extraction |
+| `GROQ_REQUEST_DELAY_SECONDS` | Delay between API requests |
+| `MUSIC_DIRECTORY` | Directory containing your music library |
 
-Choose a front-end (both use the same core engine):
+> **Important:** Never share or commit your `.env` file. It contains your private API key.
+
+---
+
+## Running
+
+Smart Music Tagger provides two front-ends that share the same processing engine.
+
+### Command Line Interface
+
+The CLI reads all required settings from the `.env` file.
 
 ```bash
-python cli_main.py      # terminal / automation
-python gui_main.py      # web GUI at http://127.0.0.1:5000
+python cli_main.py
 ```
 
-Done! The application will:
-- Scan your music directory
-- Analyze filenames with AI
-- Extract metadata
-- Update file tags
-- Rename files
-- Generate logs
+### Web Interface
 
-## Example Output
+The Web GUI does **not** require a `.env` file. Enter your API key, model, request delay, and music directory directly through the graphical interface.
 
-```
-╔════════════════════════════════════════╗
-║     SMART MUSIC TAGGER                 ║
-║     AI-Powered Metadata Management     ║
-╚════════════════════════════════════════╝
-
-ℹ Info: Loading configuration...
-ℹ Info: Scanning directory: C:/Users/YourName/Music
-
-Configuration:
-  Music Directory: C:/Users/YourName/Music
-  Files to Process: 5
-
-[1/5] Processing:
-  eminem_lose_yourself_320kbps.mp3
-         ↓
-  Eminem - Lose Yourself.mp3
-
-Metadata updated:
-  ✓ Artist: Eminem
-  ✓ Album: 8 Mile
-  ✓ Genre: Hip Hop
-  ✓ Release Year: 2002
-
-Processing Complete:
-  Total Files:    5
-  Successful:     5
-  Failed:         0
-  Success Rate:   100.0%
-
-ℹ Info: Log file saved to: logs/music_tagger_20240115_143022.log
+```bash
+python gui_main.py
 ```
 
-## File Naming Results
+Then open:
 
-Before and after examples:
+```text
+http://127.0.0.1:5000
+```
 
-### Before Processing:
+---
+
+## What It Does
+
+For every supported audio file, Smart Music Tagger automatically:
+
+- Scans your music directory
+- Analyzes filenames with AI
+- Extracts accurate metadata
+- Updates audio tags
+- Renames files to a consistent format
+- Generates a processing log
+
+---
+
+## Screenshots
+
+<table align="center">
+<tr>
+
+<td align="center">
+<b>CLI</b><br><br>
+<img src="docs/images/cli-interface.png" height="280" alt="CLI Interface">
+</td>
+
+<td width="24"></td>
+
+<td align="center">
+<b>Web GUI</b><br><br>
+<img src="docs/images/web-interface.png" height="280" alt="Web Interface">
+</td>
+
+</tr>
+</table>
+
+---
+
+## Before & After
+
+### Before
+
 - `Eminem - Lose Yourself 320kbps.mp3`
 - `scorpions - wind of change (Official Video).flac`
 - `the_beatles_let_it_be.wav`
 - `Dua Lipa - Levitating (Lyrics Video) (128).m4a`
 - `The Weeknd - Blinding Lights [Official] (2020).ogg`
 
-### After Processing:
+### After
+
 - `Eminem - Lose Yourself.mp3`
 - `Scorpions - Wind Of Change.flac`
 - `The Beatles - Let It Be.wav`
 - `Dua Lipa - Levitating.m4a`
 - `The Weeknd - Blinding Lights.ogg`
 
+---
+
 ## Supported Formats
 
-| Format | Extension | Support |
-|--------|-----------|---------|
-| MP3 | .mp3 | Full |
-| FLAC | .flac | Full |
-| WAV | .wav | Full |
-| M4A | .m4a | Full |
-| OGG | .ogg | Full |
+| Format | Extension |
+|---------|-----------|
+| MP3 | `.mp3` |
+| FLAC | `.flac` |
+| WAV | `.wav` |
+| M4A | `.m4a` |
+| OGG | `.ogg` |
 
-## What Gets Updated
+---
 
-For each file, the application updates:
+## Updated Metadata
 
-### Metadata Tags
-- Title / Song Name
+### Audio Tags
+
+The following metadata is updated whenever available:
+
+- Title
 - Artist(s)
 - Album
 - Genre
 - Release Year
-- Track Number (if available)
+- Track Number
 
-### File Name
-- Format: `Artist - Song.extension`
-- Sanitizes special characters
-- Handles multiple artists: `Artist 1 and Artist 2 - Song.mp3`
+### File Naming
+
+Files are renamed using the format:
+
+```text
+Artist - Song.extension
+```
+
+For multiple artists:
+
+```text
+Artist 1 and Artist 2 - Song.extension
+```
+
+The renamer also removes common filename noise such as:
+
+- Bitrate labels
+- "Official Video"
+- "Lyrics"
+- Duplicate information
+- Other unnecessary text
+
+---
 
 ## Logs
 
-After processing, find your log file in the `logs/` directory:
+A detailed log is generated after every run.
 
-- **Location**: `logs/music_tagger_YYYYMMDD_HHMMSS.log`
-- **Contains**:
-  - Original filename
-  - New filename
-  - Extracted metadata
-  - Success/failure status
-  - Any errors encountered
-  - Processing summary
+**Location**
 
-## Troubleshooting
-
-### "Configuration validation failed"
-```
-Missing required configuration: groq_api_key, groq_api_url, groq_model, music_directory
+```text
+logs/music_tagger_YYYYMMDD_HHMMSS.log
 ```
 
-**Solution**: Edit `.env` with all required settings.
+Each log contains:
 
-### "Groq API request failed: 401"
-```
-Unauthorized - Invalid API key
-```
+- Original filename
+- New filename
+- Extracted metadata
+- Success or failure status
+- Error messages
+- Processing summary
 
-**Solution**: Check your `GROQ_API_KEY` is correct and has valid API quota.
+---
 
-### "Music directory does not exist"
-```
-Music directory does not exist: C:/NonExistent/Path
-```
+## Project Architecture
 
-**Solution**: Update `MUSIC_DIRECTORY` to a valid folder path.
-
-### "No audio files found"
-```
-⚠ Warning: No audio files found in the specified directory
-```
-
-**Solution**:
-- Check the directory contains MP3, FLAC, WAV, M4A, or OGG files
-- Verify the path is correct
-
-### Files not renamed
-- Check file permissions in the directory
-- Ensure you have write access
-- Check the new filename doesn't already exist
-
-## Architecture Overview
-
-The application is modular and extensible:
-
-```
-User Input (config)
-        ↓
-    cli_main.py / gui_main.py   (front-end; same core engine)
-        ↓
-    ┌───┴───────────────────────┐
-    ↓           ↓               ↓
-FileScanner GroqClient   FileProcessor
-    ↓           ↓               ↓
-  (scan)    (AI API)    (process files)
-            ↓               ↓
-         Metadata        FileRenamer
-         (read/write)      (rename)
-         ↓
-    Logger (log results)
-         ↓
-    CLI / Browser (display)
+```text
+                 User Configuration
+                         │
+                         ▼
+          cli_main.py / gui_main.py
+                         │
+                         ▼
+              Core Processing Engine
+                         │
+     ┌─────────────┬──────────────┬─────────────┐
+     ▼             ▼              ▼
+ File Scanner   Groq Client   File Processor
+                                      │
+                                      ▼
+                             Metadata Writer
+                                      │
+                                      ▼
+                               File Renamer
+                                      │
+                                      ▼
+                                   Logger
 ```
 
-## Configuration Reference
+---
 
-### Required Settings
-```env
-GROQ_API_KEY=your-groq-api-key
-GROQ_API_URL=https://api.groq.com/openai/v1
-GROQ_MODEL=groq/compound-mini
-GROQ_REQUEST_DELAY_SECONDS=3
-MUSIC_DIRECTORY=/path/to/music
-```
+## Security Notes
 
-### Keeping Your API Key Secure
-- Never commit `.env` to version control (it's in `.gitignore`)
-- Use `.env.example` as a template
-- Keep your API key confidential
+- Never commit your `.env` file to version control.
+- Use `.env.example` as the configuration template.
+- Keep your API key private.
+- The repository already ignores `.env` via `.gitignore`.
 
-## Support & Issues
+---
 
-For detailed information, see:
-- `README.md` - Full documentation
-- `logs/` - Error logs and processing details
-- `.env.example` - Configuration template
+For additional information, see:
 
-Happy tagging!
+- `README.md`
+- `.env.example`
+- `logs/`

@@ -53,7 +53,7 @@ def _run_cli():
         api_key=config.get('groq_api_key'),
         api_url=config.get('groq_api_url'),
         model=config.get('groq_model'),
-        request_delay_seconds=float(config.get('groq_request_delay_seconds', 3)),
+        request_delay_seconds=float(config.get('groq_request_delay_seconds', 5)),
         music_directory=music_dir,
         logger=logger,
     )
