@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Smart Music Tagger - Main Entry Point (CLI)
+Smart Music Tagger - CLI Entry Point
 
 AI-powered music file metadata cleaning and organization.
 Analyzes filenames, extracts metadata, updates tags, and renames files.
 
 This is a thin CLI wrapper: configuration is read from ``.env``, then handed
-to the shared ``TaggerService`` which owns all business logic. The same
-service can later be driven by a Flask GUI with form-provided config.
+to the shared ``TaggerService`` which owns all business logic. The Flask GUI
+(``gui_main.py``) drives the same service with form-provided config.
 """
 
 import sys
@@ -98,7 +98,7 @@ def main():
         print("     - GROQ_REQUEST_DELAY_SECONDS: delay between Groq API requests", file=sys.stderr)
         print("     - MUSIC_DIRECTORY: path to your music folder", file=sys.stderr)
         print("  3. Run again:", file=sys.stderr)
-        print("     python main.py", file=sys.stderr)
+        print("     python cli_main.py", file=sys.stderr)
         print("="*60, file=sys.stderr)
         sys.exit(1)
     except KeyboardInterrupt:

@@ -26,8 +26,12 @@ MUSIC_DIRECTORY=C:/Users/YourName/Music
 **Important**: Keep `.env` private - it contains your API key!
 
 ### 3. Run
+
+Choose a front-end (both use the same core engine):
+
 ```bash
-python main.py
+python cli_main.py      # terminal / automation
+python gui_main.py      # web GUI at http://127.0.0.1:5000
 ```
 
 Done! The application will:
@@ -175,7 +179,7 @@ The application is modular and extensible:
 ```
 User Input (config)
         ↓
-    main.py
+    cli_main.py / gui_main.py   (front-end; same core engine)
         ↓
     ┌───┴───────────────────────┐
     ↓           ↓               ↓
@@ -188,7 +192,7 @@ FileScanner GroqClient   FileProcessor
          ↓
     Logger (log results)
          ↓
-    CLI Interface (display)
+    CLI / Browser (display)
 ```
 
 ## Configuration Reference

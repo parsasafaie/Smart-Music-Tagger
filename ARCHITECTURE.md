@@ -14,14 +14,14 @@ Smart Music Tagger is built with a **modular, layered architecture** designed fo
 ```
 ┌─────────────────────────────────────┐
 │      User Interface Layer           │
-│      (CLI Interface)                │
-│      cli/interface.py               │
+│      (CLI Interface / Flask GUI)    │
+│      cli/interface.py, gui/         │
 └──────────────┬──────────────────────┘
                │
 ┌──────────────┴──────────────────────┐
 │    Application Logic Layer          │
 │    (Orchestration & Control)        │
-│    main.py                          │
+│    cli_main.py / gui_main.py        │
 └──────────────┬──────────────────────┘
                │
     ┌──────────┼──────────┬────────────┐
@@ -45,15 +45,18 @@ Smart Music Tagger is built with a **modular, layered architecture** designed fo
 
 ## Module Breakdown
 
-### 1. **main.py** - Entry Point
-**Purpose**: Application orchestration
+### 1. **Entry Points** (`cli_main.py`, `gui_main.py`)
+**Purpose**: Application orchestration / front-end selection
 
 **Responsibilities**:
-- Load configuration
+- Load configuration (`cli_main.py` from `.env`, `gui_main.py` from a web form)
 - Initialize all components
 - Coordinate processing workflow
-- Display user feedback
+- Display user feedback (terminal or browser)
 - Handle errors gracefully
+
+Both entry points are thin wrappers over the shared `TaggerService`; neither
+contains business logic.
 
 **Dependencies**: All other modules
 
@@ -179,8 +182,8 @@ GroqClient (ai/groq_client.py)
 ## Data Flow
 
 ```
-CLI mode:                   GUI mode (future):
-  python main.py              Flask route
+CLI mode:                   GUI mode:
+  python cli_main.py          python gui_main.py
       ↓                           ↓
   Load .env (config/)         Form input (api_key, dir, delay)
       ↓                           ↓
@@ -218,7 +221,8 @@ rich         → cli/interface.py
 
 ### Internal Dependencies
 ```
-main.py → config/, core/TaggerService, cli/, logs/
+cli_main.py → config/, core/TaggerService, cli/, logs/
+gui_main.py → gui/ → core/TaggerService, logs/ (no config/, no cli/ dependency)
 
 core/service.py → core/scanner, core/processor, core/renamer, ai/, logs/
   (no CLI, no config dependency — fully GUI-agnostic)
